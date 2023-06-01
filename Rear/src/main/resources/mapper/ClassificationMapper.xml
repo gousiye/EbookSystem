@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.mapper.ClassificationMapper">
+
+    <insert id="InsertClass">
+        insert classification (class_name) values (#{class_name});
+
+    </insert>
+
+
+    <!--    根据指定id删除类-->
+    <delete id="DeleteById">
+        delete from classification
+        where id = #{id};
+        SET @auto_id = 0;
+        UPDATE classification SET id = (@auto_id := @auto_id + 1);
+        ALTER TABLE classification AUTO_INCREMENT = 1;
+
+    </delete>
+
+    <select id="GetAllNames" resultType="com.example.demo.entity.Classification">
+        select id, class_name as name from classification;
+
+    </select>
+
+
+    <select id="CheckClassExistence" resultType="java.lang.Integer">
+        select count(id) from classification
+        where class_name = #{class_name}
+    </select>
+
+
+    <select id="SearchId" resultType="java.lang.Integer">
+        select id from classification
+        where class_name = #{class_name}
+    </select>
+
+
+    <select id="CheckMapExistence" resultType="java.lang.Integer">
+        select count(book_id)
+        from book_classification
+            where classification_id = #{classification_id}
+    </select>
+
+
+</mapper>

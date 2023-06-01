@@ -1,0 +1,39 @@
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+server:
+  port: 80
+  path: http://localhost/
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    password: 123456
+    type: com.alibaba.druid.pool.DruidDataSource
+    url: jdbc:mysql://localhost:3306/sprdb?useSSL=false&allowMultiQueries=true
+    username: root
+  devtools:    #hot deployment
+    restart:
+      additional-path: src/main/java
+      enabled: true
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher #solve the conflict between spring 2.6+ and Swagger
+  servlet:
+    multipart:
+      enabled: true
+#      no limit on size
+      max-file-size: -1
+      max-request-size: -1
+    encoding:
+      force: true
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+
+#books upload path
+books:
+  upload:
+    path: D:/LYZ_For_Study/Projects/EbookSystem/Resources/EBooks/
+  resource:
+    path: table/

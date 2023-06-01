@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.demo.mapper.EbookMapper">
+
+    
+    <resultMap id="EbookResultMap" type="com.example.demo.entity.Ebook">
+        <result column="book_name" property="bookName" />
+        <result column="book_language" property="language"/>
+    </resultMap>
+
+<!--    查询功能中ebook中的部分数据-->
+    <resultMap id="QueryEbookMap" type="com.example.demo.partEntity.QueryBook">
+        <id column="book_id" property= "id"/>
+        <result column="book_name" property="bookName"/>
+        <result column="suffix" property="suffix"/>
+        <result column="download" property="download"/>
+        <result column="size" property="size"/>
+        <result column= "author_name" property="authorName" />
+    </resultMap>
+
+    <!--    查询功能中ebook中的部分数据-->
+    <resultMap id="FullEbookMap" type="com.example.demo.partEntity.FullBook">
+        <id column="book_id" property= "id"/>
+        <result column="book_name" property="bookName"/>
+        <result column= "author_name" property="authorName" />
+        <result column="suffix" property="suffix"/>
+        <result column="book_language" property="language"/>
+        <result column="download" property="download"/>
+        <result column= "introduction" property="introduction" />
+        <result column= "publisher" property="publisher" />
+        <result column= "size" property="size" />
+        <result column= "create_time" property="createTime" />
+        <result column= "update_time" property="lastAlterTime" />
+    </resultMap>
+
+
+
+<!--    添加书籍-->
+    <insert id="InsertBook">
+        insert into ebook
+        (id, book_name, author_name, suffix, book_language, download, introduction, publisher)
+        values
+        (#{book_id}, #{book_name}, #{author_name}, #{suffix}, #{book_language}, #{download}, #{introduction}, #{publisher})
+    </insert>
+
+<!--    书籍和类别的关系的映射-->
+    <insert id="MapBookWithClassificaiton">
+        insert into book_classification
+        (book_id, classification_id)
+        values
+        (#{book_id}, #{classification_id})
+    </insert>
+
+<!--    更新下载量-->
+    <update id="UpdateDownload">
+        update ebook set download=download+1 where id = #{book_id}
+    </update>
+
+    <!--    删除book和class的关系-->
+    <delete id="DeleteClassMap">
+        delete from book_classification
+        where book_id = #{book_id}
+    </delete>
+
+<!--    删除ebook的记录-->
+    <delete id="DeleteBook">
+        delete from ebook
+        where id = #{book_id}
+    </delete>
+
+
+    <!--    查询符合条件的电子书的id-->
+    <select id="QueryAll" resultType="java.lang.String">
+        select ebook_id
+        from (
+            select ebook.id as ebook_id from
+                ebook left outer join book_classification on ebook.id = book_classification.book_id
+                left outer join classification on classification.id = book_classification.classification_id
+          <where>
+              <if test = "book_name != null and book_name != '%%' ">
+                    and book_name like #{book_name}
+              </if>
+              <if test = "classification != null and classification != '%%' ">
+                  and class_name like #{classification}
+              </if>
+              <if test = "suffix != null and suffix != '' ">
+                    and suffix = #{suffix}
+              </if>
+          </where>
+        group by ebook.id) as tmp
+    </select>
+
+
+<!--    返回符合条件的书籍名单-->
+    <select id="Query" resultMap="QueryEbookMap">
+        select ebook.id as book_id, book_name,ebook.suffix, download, author_name, size
+        from ebook left outer join book_classification on ebook.id = book_classification.book_id
+            left outer join classification on classification.id = book_classification.classification_id
+            left outer join book_file on ebook.id = book_file.book_id
+        <where>
+            <if test = "book_name != null and book_name != '%%' ">
+                and book_name like #{book_name}
+            </if>
+            <if test = "classification != null and classification != '%%' ">
+                and class_name like #{classification}
+            </if>
+            <if test = "suffix != null and suffix != '' ">
+                and suffix = #{suffix}
+            </if>
+        </where>
+        group by ebook.id
+        limit #{index}, #{pageSize};
+    </select>
+
+
+<!--    判断一本书是否模糊满足给定的分类-->
+    <select id="CountCertainCondtion" resultType="java.lang.Integer">
+        select count(book_id)
+        from book_classification
+            left outer join classification on book_classification.classification_id = classification.id
+        where book_id = #{book_id} and class_name like #{class_name}
+    </select>
+
+
+<!--    根据给定的电子书获得类别-->
+    <select id="Book2Class" resultType="java.lang.String">
+        select class_name
+        from  book_classification
+            left  outer join classification on book_classification.classification_id = classification.id
+        where book_id = #{book_id}
+    </select>
+
+
+    <select id="Book2ClassId" resultType="java.lang.Integer">
+        select classification_id
+        from  book_classification
+            left  outer join classification on book_classification.classification_id = classification.id
+        where book_id = #{book_id}
+    </select>
+
+
+<!--    查询所有电子书涵盖的后缀名-->
+    <select id="GetAllSuffix" resultType="java.lang.String">
+        select distinct suffix from ebook
+    </select>
+
+<!-- 测试用-->
+    <select id="All" resultMap="QueryEbookMap">
+        select ebook.id as book_id, book_name, suffix, download,
+        classification.id as classification_id,  class_name as classification_name
+        from ebook left outer join book_classification on ebook.id = book_classification.book_id
+        left outer join classification on classification.id = book_classification.classification_id
+
+    </select>
+
+
+    <select id="JudgeIDUnique" resultType="java.lang.Integer">
+        select count(id)
+        from ebook
+        where id = #{book_id}
+    </select>
+
+<!--    根据书名，作者判断书籍是否重复-->
+    <select id="CheckBook" resultType="java.lang.Integer">
+        select count(id) from ebook
+        where book_name = #{book_name} and author_name = #{author_name}
+    </select>
+
+<!--    得到一本书的全部基本信息，除了类别-->
+    <select id="GetABookInfo" resultMap="FullEbookMap">
+        select ebook.id as book_id, book_name, author_name,
+            ebook.suffix as suffix, book_language, download, introduction,
+            publisher, size, create_time, update_time
+        from ebook
+            left outer join book_file on ebook.id = book_file.book_id
+
+        where ebook.id = #{book_id}
+    </select>
+
+
+
+
+</mapper>
